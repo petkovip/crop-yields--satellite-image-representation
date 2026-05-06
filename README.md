@@ -67,11 +67,48 @@ project-geospatial/
 │
 ├── readings/                  ← reference papers used for related-work / methods
 │
-├── data/    (gitignored)      ← raw + processed datasets, ~260 GB at full scope
-└── models/  (gitignored)      ← trained encoder weights and per-epoch checkpoints
+├── results/                   ← canonical results (small parquets + figures from nb 03/05/06)
+│   ├── tables/                ← e.g. corn_yield_stage1.parquet, baseline_yield_results.parquet, effective_rank.parquet
+│   └── charts/                ← raw figure outputs of the notebooks (the report copies live in final-report/charts/)
+│
+├── data/    (NOT on GitHub — see "Large artefacts" below)
+│   ├── raw/cropnet/
+│   │   ├── Sentinel-2 Imagery/data/{AG,NDVI}/...        ← biweekly multispectral HDF5s (~258 GB at full 7-state scope)
+│   │   ├── USDA Crop Dataset/...                       ← USDA NASS yield + condition CSVs
+│   │   └── WRF-HRRR Computed Dataset/...               ← weather covariates (NetCDF)
+│   └── processed/
+│       ├── county_index.parquet                        ← (state, fips, year, biweek) → h5_path index
+│       ├── crd_lookup.parquet                          ← FIPS → Crop Reporting District lookup
+│       ├── phen_stage_lookup.parquet                   ← phenological stage per (state, week)
+│       ├── biweekly_ndvi.parquet                       ← per (fips, year, biweek) NDVI
+│       ├── baseline_features.parquet                   ← peak / growing-season aggregates
+│       ├── yield_county_year.parquet                   ← USDA corn yields (county-year)
+│       ├── yield_soybean_county_year.parquet           ← USDA soybean yields (kept for future ablations)
+│       └── features/
+│           ├── feature_index.parquet                   ← per-tile (state, fips, year, biweek, grid_idx)
+│           ├── geo_simclr_resnet18.npy                 ← per-tile Geo-SimCLR features (n × 512)
+│           ├── dinov2_base.npy                         ← per-tile DINOv2 features (n × 768)
+│           ├── prithvi_eo_300m.npy                     ← per-tile Prithvi features (n × 1024)
+│           ├── random_resnet18.npy                     ← per-tile random-init ResNet-18 features
+│           ├── per_county_year/<encoder>.parquet       ← (fips, year, feat_*) aggregates used by probes
+│           └── per_county_year_biweek/<encoder>.parquet← (state, fips, year, biweek, feat_*) for visualisations
+│
+└── models/  (NOT on GitHub — see "Large artefacts" below)
+    ├── geo_simclr_resnet18/
+    │   ├── geo_simclr_resnet18_best.pt                 ← best-loss encoder + projector (~43 MB), used downstream
+    │   ├── band_stats.json                             ← per-band normalisation statistics
+    │   ├── training_log.parquet                        ← per-epoch loss / pos-sim / ‖h‖ / lr
+    │   └── checkpoints/                                ← per-epoch full state (~130 MB each × 50 epochs ≈ 6.5 GB)
+    └── convlstm/
+        └── convlstm_best.pt                            ← best-val supervised ConvLSTM weights (~46 MB)
 ```
 
-`data/` and `models/` are excluded from version control because they are large; the notebooks regenerate them deterministically from the CropNet HuggingFace dataset and USDA NASS open data, given enough disk and a GPU. The first part of `02_acquire_data.ipynb` runs on a three-state subset (~78 GB) for users with limited storage.
+### Large artefacts (`data/` and `models/`)
+
+The `data/` tree is roughly **260 GB** at the full seven-state scope (the raw CropNet Sentinel-2 imagery dominates) and the `models/` tree is roughly **6.5 GB** (mostly the per-epoch SSL checkpoints). Both are too large to host on GitHub, so they are gitignored. Two ways to obtain them:
+
+1. **Direct copy.** I will share a OneDrive link with the instructor that contains the full `data/` and `models/` folders verbatim. Drop them at the repo root (preserving the layout above) and every notebook will run as-is. Available **on request** for anyone else.
+2. **Reproduce from scratch.** The notebooks regenerate the full pipeline deterministically from public sources (CropNet HuggingFace + USDA NASS open data). Run them in order: `02 → 03 → 04 → 05 → 06 → 09`. The first part of `02_acquire_data.ipynb` covers a three-state pilot (~78 GB) for users with limited storage; the second part expands to seven states (~260 GB).
 
 ## Notebook walk-through (run order)
 
@@ -83,15 +120,6 @@ project-geospatial/
 | `05_extract_and_probe.ipynb` | Extract frozen features for **four encoders** (Geo-SimCLR, DINOv2-base, Prithvi-EO 2.0, random-init ResNet-18), aggregate per (county, year), run Ridge + LightGBM probes with bootstrap CIs under time and county splits, and train the supervised ConvLSTM comparator end-to-end. Produces the headline results table consumed by `09`. | Geo-SimCLR weights, raw AG HDF5s, USDA yields, NDVI baselines | `data/processed/features/<encoder>.npy`, `data/processed/features/per_county_year/<encoder>.parquet`, `models/convlstm/convlstm_best.pt`, `results/tables/corn_yield_stage1.parquet` | GPU strongly recommended (~3–4 h on 2 GPUs); CPU smoke test available via DEBUG. |
 | `06_visualize.ipynb` | Diagnose the Geo-SimCLR representation: SVD spectrum and effective rank, M-PHATE 2-panel on the year-averaged county-biweek tensor, UMAP facets (state / CRD / yield quintile), per-county PCA biweek trajectories, GradCAM in agriculture-false-colour, plain PHATE for sanity. Surfaces the partial-collapse limitation. | `feature_index.parquet`, Geo-SimCLR features + weights | `results/tables/effective_rank.parquet`, `results/charts/{singular_spectrum, m_phate_collapse, umap_facets, pca_county_trajectories, gradcam_examples, phate_collapse}.png` | CPU-only, ~10–20 min. |
 | `09_results.ipynb` | Single source of truth for every figure and LaTeX table in the report: re-renders `fig01..fig09 + figA1..figA3` into `final-report/charts/` and `tab01..tab03 + tabA1..tabA2` into `final-report/tables/`. Re-running this notebook regenerates the report assets verbatim from the cached parquet files. | All artefacts produced by the notebooks above | `final-report/charts/*.png`, `final-report/tables/*.tex` | CPU-only. |
-
-## Where data lives
-
-- `data/raw/cropnet/` — raw CropNet downloads, organised exactly as the upstream HuggingFace package emits them. Three subtrees: `Sentinel-2 Imagery/data/{AG,NDVI}/...` (HDF5), `USDA Crop Dataset/...` (CSV), `WRF-HRRR Computed Dataset/...` (NetCDF).
-- `data/processed/` — curated parquets (`county_index`, `yield_county_year`, `crd_lookup`, `phen_stage_lookup`, `biweekly_ndvi`, `baseline_features`) produced by notebooks `02` and `03`.
-- `data/processed/features/` — per-tile encoder features (`.npy`) and the matching `feature_index.parquet`, plus `per_county_year/<encoder>.parquet` and `per_county_year_biweek/<encoder>.parquet` aggregates produced by notebooks `05` and `06`.
-- `models/geo_simclr_resnet18/` — the trained Geo-SimCLR weights, per-epoch checkpoints, training log, and band statistics produced by `04`.
-- `models/convlstm/` — the supervised end-to-end ConvLSTM weights produced by `05`.
-- `results/tables/` and `results/charts/` — the canonical results parquets and notebook-output figures produced by `03`, `05`, `06`. The report itself reads from `final-report/charts/` and `final-report/tables/` (re-rendered by `09`).
 
 ## Setup
 
