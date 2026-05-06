@@ -17,6 +17,9 @@ models/
 
 final-report/Presentation-video.mp4
 
+.gitattributes
+PROJECT_STATUS.md
+
 
 # Scratch helper scripts I generated during the cleanup pass
 .tmp_*.py
