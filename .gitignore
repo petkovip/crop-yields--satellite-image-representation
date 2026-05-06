@@ -1,0 +1,106 @@
+# ---------------- Project-specific ----------------
+
+# Cursor / agent state
+.cursor/
+agent-tools/
+
+# Old (pre-vF) notebook copies; the submission version lives in notebooks-vF/
+notebooks/
+
+# Speaker notes (kept locally, not part of the submitted artefacts)
+final-report/presentation_notes.md
+
+# Large artefacts -- intentionally excluded for the initial repo push.
+# Re-add later via `git add -f data/...` / `git add -f models/...` if you want them tracked.
+data/
+models/
+
+# Scratch helper scripts I generated during the cleanup pass
+.tmp_*.py
+.tmp_*.txt
+
+# ---------------- LaTeX build artefacts (final-report/) ----------------
+
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.toc
+*.run.xml
+*.bcf
+
+# ---------------- Python ----------------
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.Python
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# Notebook checkpoints + nbconvert outputs
+.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# Test / coverage / type-check caches
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.dmypy.json
+
+# ---------------- IDE / editor ----------------
+
+.vscode/
+.idea/
+*.swp
+*.swo
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# ---------------- OS junk ----------------
+
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ---------------- Misc ----------------
+
+# Environment / secret files
+.env
+.env.*
+!.env.example
+
+# Random outputs
+*.tmp
+*.bak
+*.log
+test.png
+open.url

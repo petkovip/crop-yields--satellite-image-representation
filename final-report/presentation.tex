@@ -1,0 +1,410 @@
+% =============================================================================
+% Geo-SimCLR -- AMTH 5520 final-project Beamer deck
+% =============================================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+
+\usetheme{CambridgeUS}
+\usecolortheme{beaver}
+\setbeamertemplate{navigation symbols}{}     % cleaner footer (no tiny nav icons)
+\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{itemize items}[circle]
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+% all figures live in charts/ relative to this .tex
+\graphicspath{{charts/}}
+
+% --- title-page metadata -----------------------------------------------------
+\title[Geo-SimCLR]{Geo-SimCLR: Self-Supervised Contrastive Pre-training\\
+                   of Sentinel-2 for U.S.\ Corn-Belt Yield Prediction}
+\author[Ivan Petkov]{Ivan Petkov}
+\institute[Yale]{%
+  AMTH 5520 -- Final Project\\
+  Yale University\\
+  \vspace{2pt}
+  \footnotesize Instructor: Prof.\ Smita Krishnaswamy
+}
+\date{May 2026}
+
+% =============================================================================
+\begin{document}
+% =============================================================================
+
+% ---------- Slide 1: title ---------------------------------------------------
+\begin{frame}[plain]
+  \titlepage
+  \vfill
+  \centering\scriptsize
+  Code: \url{https://github.com/<TODO>/geo-simclr-cropnet}
+  \quad$|$\quad
+  Video: \url{https://youtu.be/<TODO>}
+\end{frame}
+
+% ---------- Slide 2: Motivation ----------------------------------------------
+\section{Motivation}
+\begin{frame}{Why this matters}
+  \begin{itemize}\setlength\itemsep{6pt}
+    \item \textbf{Crop-yield monitoring} drives agricultural planning, food
+          security, monetary-policy inputs, and is now a recognised input to
+          quantitative finance.
+    \item \textbf{Sentinel-2 imagery is free \& global}: the bottleneck is
+          \alert{representation}, not data acquisition.
+    \item \textbf{Labels are scarce}: only $\sim$3\,k USDA county-year corn-yield
+          labels across our 7-state Corn Belt sample, vs.\ $\sim$850\,k
+          unlabelled tiles.
+    \item \textbf{Recipe is broadly applicable}: the same gap exists in
+          climate-change attribution, deforestation, biodiversity, urban-growth,
+          and drought monitoring.
+  \end{itemize}
+
+  \vspace{6pt}
+  \begin{block}{Goal}
+    Learn a rich, transferable representation of multispectral satellite tiles
+    \emph{from unlabelled imagery alone}, then probe it cheaply for yield.
+  \end{block}
+\end{frame}
+
+% ---------- Slide 3: Background timeline -------------------------------------
+\section{Background}
+\begin{frame}{Three eras of crop-yield prediction from satellite imagery}
+  \centering\small
+  \renewcommand{\arraystretch}{1.35}
+  \begin{tabular}{p{2.7cm} p{4.6cm} p{6.8cm}}
+    \toprule
+    \textbf{Era} & \textbf{Approach} & \textbf{Examples} \\
+    \midrule
+    Hand-crafted features &
+      Spectral indices $\to$ tree / linear regressor &
+      NDVI + LightGBM, Khaki et al.\ 2020 (CNN-RNN, tabular) \\
+    Supervised CNN/RNN &
+      End-to-end deep imagery models &
+      ConvLSTM (Shi 2015), CNN-RNN, GNN-RNN (Fan 2022),
+      MMST-ViT (Lin 2024, multi-modal) \\
+    Self-supervised &
+      Contrastive / MAE pre-training, then probe &
+      SimCLR (Chen 2020), DINOv2, MAE / SatMAE,
+      Prithvi-EO 2.0, SeCo, GASSL\\
+    \midrule
+    \alert{Our work} &
+      \alert{SimCLR with temporal positives} &
+      \alert{Geo-SimCLR (this project)} \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+% ---------- Slide 4: Data overview -------------------------------------------
+\section{Data}
+\begin{frame}{Data: 7 Corn-Belt states, 6 years, biweekly Sentinel-2}
+  \centering
+  \includegraphics[width=0.95\linewidth,height=0.78\textheight,keepaspectratio]%
+                  {fig03_data_summary.png}
+
+  \vspace{4pt}
+  \tiny CropNet release of Sentinel-2 imagery -- agriculture false-colour
+  bands B02 / B08 / B11 -- biweekly Apr--Sep, 224$\times$224 px @ 40 m/pixel
+  ($9 \times 9$\,km tiles).
+\end{frame}
+
+% ---------- Slide 5: Phenology + yield variance ------------------------------
+\begin{frame}{Phenology window and yield variance}
+  \begin{columns}[T]
+    \begin{column}{0.55\textwidth}
+      \centering
+      \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]%
+                      {figA2_phen_stage.png}
+      \\[2pt]\tiny USDA Handbook 628 reference phenology -- 7-state coverage
+      of the full April--September growing window.
+    \end{column}
+    \begin{column}{0.43\textwidth}
+      \centering
+      \includegraphics[width=\linewidth,height=0.55\textheight,keepaspectratio]%
+                      {figA3_yield_distribution.png}
+      \\[2pt]\tiny Per-state yield boxplots (early 3-state snapshot;
+      full 7-state numbers in the report).
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ---------- Slide 6: Pipeline schematic --------------------------------------
+\section{Method}
+\begin{frame}{Geo-SimCLR pipeline}
+  \centering
+  \includegraphics[width=0.95\linewidth,height=0.80\textheight,keepaspectratio]%
+                  {fig01_pipeline.png}
+\end{frame}
+
+% ---------- Slide 7: Augmentation examples on real tiles ---------------------
+\begin{frame}{What the contrastive task looks like on real tiles}
+  \centering
+  \includegraphics[width=0.95\linewidth,height=0.83\textheight,keepaspectratio]%
+                  {fig02_augmentation_examples.png}
+\end{frame}
+
+% ---------- Slide 8: Method details (loss + hyperparameters) -----------------
+\begin{frame}{NT-Xent loss and key training settings}
+  \vspace{-4pt}
+  \begin{block}{NT-Xent loss (Chen et al.\ 2020)}
+    \vspace{-8pt}
+    \[
+      \mathcal{L}_{i \to j} \;=\; -\log
+        \frac{\exp(z_i^\top z_j / \tau)}
+             {\sum_{k=1}^{2N} \mathbf{1}_{[k\neq i]} \exp(z_i^\top z_k / \tau)}
+    \]
+    \vspace{-10pt}
+    \centering\scriptsize
+    $\ell_2$-normalised projections $z_i$, in-batch negatives,
+    temperature $\tau = 0.20$.
+  \end{block}
+
+  \vspace{-2pt}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \footnotesize\textbf{Architecture}
+      \begin{itemize}\footnotesize\setlength\itemsep{0pt}
+        \item ResNet-18 from scratch, 11.2\,M params
+        \item Projector MLP $512 \to 256 \to 128$ (dropped after SSL)
+      \end{itemize}
+      \footnotesize\textbf{Optimisation}
+      \begin{itemize}\footnotesize\setlength\itemsep{0pt}
+        \item AdamW, lr $10^{-3}$, wd $10^{-4}$
+        \item 5-ep warm-up $\to$ cosine, 50 epochs
+        \item Batch 1024, AMP, $\sim$5\,h on 2 GPUs
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.50\textwidth}
+      \footnotesize\textbf{Pretext-task design}
+      \begin{itemize}\footnotesize\setlength\itemsep{0pt}
+        \item Positive = same field, biweek $t \pm 1$ ($\sim$14 d)
+        \item CRD-balanced anchors (61 unique CRDs)
+        \item $\sim$645\,k anchor pairs / epoch
+      \end{itemize}
+      \footnotesize\textbf{Augmentations (per view, indep.)}
+      \begin{itemize}\footnotesize\setlength\itemsep{0pt}
+        \item h/v flip, rot90, crop 160--208 $\to$ 224
+        \item sharpness, intensity jitter, Gaussian noise
+        \item \alert{No} spectral dropout, RGB jitter, mixup
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ---------- Slide 9: Evaluation methodology ----------------------------------
+\begin{frame}{Evaluation methodology}
+  \begin{columns}[T]
+    \begin{column}{0.50\textwidth}
+      \textbf{Splits}
+      \begin{itemize}\small\setlength\itemsep{3pt}
+        \item \textbf{Time split:} train 2017--2020 / val 2021 /
+              test 2022. Strict no-look-ahead in-season-forecast benchmark.
+        \item \textbf{County split:} random 20\,\% of FIPS held out across
+              all years. Spatial generalisation test.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.50\textwidth}
+      \textbf{Probes on frozen features}
+      \begin{itemize}\small\setlength\itemsep{3pt}
+        \item Mean-pool tile features per (\textit{fips, year}) into one
+              512-d vector.
+        \item Probe: \textbf{Ridge} ($\alpha\!=\!1$) or \textbf{LightGBM}
+              (300 trees, early stopping on 2021).
+        \item Optional state one-hot + year scalar: only on county split
+              (year extrapolates badly out-of-sample).
+        \item Bootstrap 95\,\% CIs from $n\!=\!200$ paired resamples.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+
+  \vspace{4pt}
+  \begin{block}{Why split-aware probes}
+    For \emph{every} encoder, Ridge wins time-split and LightGBM with state+year
+    wins county-split. Reported headline cells are the empirical winner per
+    encoder (full grid in the report's Appendix).
+  \end{block}
+\end{frame}
+
+% ---------- Slide 10: Baselines ----------------------------------------------
+\begin{frame}{Baselines: imagery-only, fixed input modality}
+  \begin{itemize}\setlength\itemsep{6pt}
+    \item \textbf{Hand-crafted NDVI} (6 specifications) $\to$ Ridge / LightGBM.
+          Strongest: state + year + biweekly NDVI series (LightGBM, 20 features).
+    \item \textbf{Random ResNet-18}: same architecture as Geo-SimCLR, never trained.
+          Sanity baseline -- mean-pooled random conv features carry colour /
+          texture statistics correlated with vegetation.
+    \item \textbf{DINOv2-base} (frozen, 85.7\,M params, 768-d).
+          Trained on 142\,M natural RGB images; AG bands fed as RGB slots.
+    \item \textbf{Prithvi-EO 2.0} (frozen, 303.9\,M params, 1024-d).
+          EO-specialised but expects 6-band HLS; we channel-pad the 3 missing.
+    \item \textbf{ConvLSTM} end-to-end (12.4\,M params).
+          Per-frame ResNet-18 + LSTM(512$\to$256) + MLP head, $z$-scored
+          target, image augmentation across all 12 biweek frames.
+  \end{itemize}
+
+  \vspace{2pt}
+  \scriptsize\itshape We deliberately do not chase MMST-ViT: it is multi-modal
+  and the CropNet ablation attributes most of its gain to the WRF-HRRR weather
+  modality, not the imagery.
+\end{frame}
+
+% ---------- Slide 11: Headline results ---------------------------------------
+\section{Results}
+\begin{frame}{Headline result: best single encoder on both splits}
+  \centering
+  \includegraphics[width=0.92\linewidth,height=0.62\textheight,keepaspectratio]%
+                  {fig05_encoder_comparison.png}
+
+  \vspace{2pt}
+  \begin{block}{Headline numbers}
+    \centering\small Geo-SimCLR test
+    $R^2 = \textbf{0.669}$ (time, Ridge) and $\textbf{0.660}$ (county, LightGBM);
+    +$0.118\,R^2$ over supervised end-to-end ConvLSTM on time.
+  \end{block}
+\end{frame}
+
+% ---------- Slide 12: Why it works -------------------------------------------
+\begin{frame}{Reading the ranking}
+  \begin{itemize}\setlength\itemsep{8pt}
+    \item \textbf{Geo-SimCLR $\succ$ ConvLSTM end-to-end} ($+0.118\,R^2$
+          time) -- SSL pretext sees $\sim$6.4\,M (anchor, positive,
+          1023-negs) tuples $\times$ 50 epochs over 850\,k unlabelled tiles
+          vs.\ ConvLSTM's $\sim$2{,}100 supervised yield labels. Pure
+          \alert{data-efficiency} win.
+    \item \textbf{Geo-SimCLR $\succ$ Prithvi-EO 2.0} (despite 27$\times$ more
+          parameters) -- Prithvi expects 6-band HLS; we channel-pad the
+          missing 3. Effective rank on padded input collapses to
+          $\sim$$1.7 / 1024$ -- documented \alert{baseline limitation}, not a
+          claim about Prithvi-the-model.
+    \item \textbf{Geo-SimCLR $\approx$ DINOv2-base} (within $\sim$$0.06\,R^2$
+          at $7.6\times$ fewer parameters) -- large general-purpose SSL
+          transfers surprisingly well to satellite RGB-like inputs.
+          Geo-SimCLR's edge comes from the temporal-positive pretext task
+          being domain-aware.
+  \end{itemize}
+\end{frame}
+
+% ---------- Slide 13: Training trajectory ------------------------------------
+\begin{frame}{SSL training trajectory (and the first warning sign)}
+  \centering
+  \includegraphics[width=0.95\linewidth,height=0.78\textheight,keepaspectratio]%
+                  {fig06_training_curves.png}
+
+  \vspace{2pt}
+  \scriptsize Loss converges cleanly; encoder norm is stable (no zero-collapse).
+  But mean positive-pair cosine similarity climbs to $\sim$$0.95$ -- adjacent-biweek
+  positives are intrinsically very similar.
+\end{frame}
+
+% ---------- Slide 14: M-PHATE ------------------------------------------------
+\begin{frame}{What did the encoder learn? -- M-PHATE}
+  \centering
+  \includegraphics[width=0.95\linewidth,height=0.78\textheight,keepaspectratio]%
+                  {fig07_mphate.png}
+
+  \vspace{2pt}
+  \scriptsize \textbf{State coloring (a):} clean state-coherent clusters --
+  geography is encoded.\quad
+  \textbf{Biweek coloring (b):} smooth but tightly overlapping --
+  seasonal phenology only weakly encoded.
+\end{frame}
+
+% ---------- Slide 15: Honest collapse diagnostic -----------------------------
+\begin{frame}{Honest collapse diagnostic}
+  \centering
+  \includegraphics[width=0.95\linewidth,height=0.62\textheight,keepaspectratio]%
+                  {fig08_collapse.png}
+
+  \vspace{2pt}
+  \begin{block}{Three numbers that quantify it}
+    \centering\small
+    Effective rank \textbf{82.3\,/\,512} \,$|$\,
+    mean post-$\ell_2$ cosine sim \textbf{+0.228} \,$|$\,
+    each county's 12 biweek points span only \textbf{4--6\,\%} of the global
+    pairwise distance.
+  \end{block}
+\end{frame}
+
+% ---------- Slide 16: GradCAM ------------------------------------------------
+\begin{frame}{Pixel attribution via GradCAM}
+  \centering
+  \includegraphics[width=0.95\linewidth,height=0.74\textheight,keepaspectratio]%
+                  {fig09_gradcam.png}
+
+  \vspace{2pt}
+  \scriptsize Read in light of the collapse: encoder finds \emph{where} the
+  cropland is -- consistent across high- and low-yield extremes -- not
+  \emph{how that crop is currently doing}.
+\end{frame}
+
+% ---------- Slide 17: Limitations + future work ------------------------------
+\section{Discussion}
+\begin{frame}{Limitations and future work}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \textbf{Limitations}
+      \begin{itemize}\small\setlength\itemsep{3pt}
+        \item Partial dimensional collapse along county-identity directions
+              ($R_{\mathrm{eff}}\!=\!82/512$).
+        \item Phenology only weakly encoded -- our headline claim is
+              \emph{strong geography}, not \emph{strong phenology}.
+        \item Small backbone (ResNet-18, 11\,M params) by SSL-paper standards.
+        \item Evaluation restricted to 7 states / 6 years / corn only.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.52\textwidth}
+      \textbf{Future work (priority order)}
+      \begin{enumerate}\small\setlength\itemsep{3pt}
+        \item \alert{Harder positives + stronger augmentations}
+              ($\pm 3$--$5$ biweeks; tighter crop ranges).
+        \item \alert{Decorrelation regulariser} (Barlow-Twins / VICReg term
+              added to NT-Xent).
+        \item Head-to-head against SeCo, GASSL, GeoSSL, SatMAE under the same
+              probe protocol.
+        \item 4-channel AG+NDVI input;\; partial fine-tuning;\;
+              fine-tune on USDA Weekly Crop Progress.
+        \item Larger backbone, more crops (soybean transfer), weather ablation,
+              cross-country generalisation.
+      \end{enumerate}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+% ---------- Slide 18: Thank-you / references ---------------------------------
+\begin{frame}[plain]{Thank you  \quad{\normalfont\small Questions?}}
+  \vspace{6pt}
+  \footnotesize
+  \textbf{Full report:} accompanying NeurIPS-style paper (this folder).\\
+  \textbf{Code:} \url{https://github.com/<TODO>/geo-simclr-cropnet}\\
+  \textbf{Video:} \url{https://youtu.be/<TODO>}
+
+  \vspace{14pt}
+  \textbf{Selected references}
+  \scriptsize
+  \begin{itemize}\setlength\itemsep{1pt}
+    \item Chen et al.\ \textit{A Simple Framework for Contrastive Learning of
+          Visual Representations.} ICML 2020. (SimCLR)
+    \item Lin et al.\ \textit{An Open and Large-Scale Dataset for Multi-Modal
+          Climate Change-Aware Crop Yield Predictions.} KDD 2024. (CropNet)
+    \item Oquab et al.\ \textit{DINOv2: Learning Robust Visual Features
+          without Supervision.} TMLR 2024.
+    \item Jakubik et al.\ \textit{Prithvi-EO-2.0: A Versatile Multi-Temporal
+          Foundation Model for Earth Observation.} IBM-NASA 2024.
+    \item Shi et al.\ \textit{Convolutional LSTM Network: A Machine Learning
+          Approach for Precipitation Nowcasting.} NeurIPS 2015.
+    \item Gigante et al.\ \textit{Visualizing the PHATE of Neural Networks.}
+          NeurIPS 2019. (M-PHATE)
+    \item Jing et al.\ \textit{Understanding Dimensional Collapse in
+          Contrastive Self-Supervised Learning.} ICLR 2022.
+    \item Selvaraju et al.\ \textit{Grad-CAM: Visual Explanations from Deep
+          Networks via Gradient-Based Localization.} ICCV 2017.
+  \end{itemize}
+\end{frame}
+
+\end{document}

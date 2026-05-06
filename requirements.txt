@@ -1,0 +1,53 @@
+# Core dependencies
+torch>=2.0
+torchvision>=0.15
+numpy>=1.24
+pandas>=1.5
+pyarrow>=14.0          # parquet I/O
+matplotlib>=3.7
+seaborn>=0.12
+scikit-learn>=1.2
+tqdm>=4.66             # progress bars on every long loop
+h5py>=3.10             # CropNet HDF5 file format
+
+# CropNet dataset + Hugging Face
+cropnet>=0.2.1         # CropNet PyPI package: download/retrieve/dataset APIs
+huggingface_hub>=0.20  # backing for cropnet downloads
+ecmwflibs>=0.5         # eccodes dependency required by cropnet
+
+# Contrastive learning (Geo-SimCLR is implemented from scratch; lightly kept as a backup reference)
+lightly>=1.4
+
+# Tabular baseline / weather ablation
+lightgbm>=4.0
+
+# Pretrained foundation-model baselines
+timm>=0.9              # ImageNet/DINOv2/ViT backbones
+# terratorch>=1.0      # Stage 2 only (Prithvi-EO via TerraTorch). Defer install.
+
+# Visualization (Stage 1 nb 06)
+phate>=2.0             # continuous trajectory visualization (Moon et al. 2019, Nat. Biotech.)
+m-phate>=0.1           # Multislice PHATE for slice-aware trajectories (Gigante et al. 2019). Install with `pip install --no-deps m-phate` if pip resolver tries to rebuild pandas.
+umap-learn>=0.5
+
+# Financial data (Stage 2 stretch)
+yfinance>=0.2
+
+# Geospatial (kept for county boundary lookups; not heavy use)
+geopandas>=0.13
+shapely>=2.0
+pyproj>=3.5
+
+# Image processing
+Pillow>=9.5
+opencv-python>=4.7
+
+# Jupyter
+jupyter>=1.0
+ipywidgets>=8.0
+
+# Experiment tracking (optional)
+wandb>=0.15
+
+# Interpretability (Stage 1 nb 06)
+captum>=0.6           # GradCAM via LayerGradCam (Selvaraju et al. 2017)

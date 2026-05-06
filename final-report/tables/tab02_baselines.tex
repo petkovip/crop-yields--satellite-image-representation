@@ -1,0 +1,20 @@
+\begin{table}[H]
+\centering
+\caption{Hand-crafted NDVI baselines for 7-state corn-yield prediction (LightGBM and Ridge),
+test-set $R^2$ and RMSE (bushels per acre) on both splits. Bold values are the per-column winner.}
+\label{tab:baselines}
+\begin{tabular}{lcccccc}
+\toprule
+& & & \multicolumn{2}{c}{\textbf{Time split}} & \multicolumn{2}{c}{\textbf{County split}} \\
+\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+\textbf{Specification} & \textbf{\#feats} & \textbf{Model} & \textbf{$R^2$} & \textbf{RMSE} & \textbf{$R^2$} & \textbf{RMSE} \\
+\midrule
+Peak NDVI & 1 & Ridge & +0.141 & 30.38 & +0.261 & 26.43 \\
+Growing-season summary & 6 & LightGBM & +0.200 & 29.33 & +0.363 & 24.54 \\
+Biweekly NDVI series & 12 & LightGBM & +0.279 & 27.85 & +0.475 & 22.27 \\
+State + year (no NDVI) & 8 & Ridge & +0.199 & 29.34 & +0.285 & 25.85 \\
+\textbf{State + year + biweekly NDVI} & 20 & LightGBM & \textbf{+0.429} & \textbf{24.78} & \textbf{+0.651} & \textbf{18.15} \\
+State + year + peak NDVI & 9 & Ridge & +0.235 & 28.68 & +0.427 & 23.26 \\
+\bottomrule
+\end{tabular}
+\end{table}

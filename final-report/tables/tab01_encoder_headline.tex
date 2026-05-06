@@ -1,0 +1,31 @@
+\begin{table}[H]
+\centering
+\caption{Test-set $R^2$ and RMSE (bushels per acre) by encoder on 7-state US Corn Belt corn yield,
+under the per-encoder split-aware probe choice. The time-split column uses Ridge with no state+year
+features; the county-split column uses LightGBM with state+year features (the empirical winner of
+both \{Ridge, LightGBM\} $\times$ \{with, without state+year\} grids for every encoder; see
+Table~\ref{tab:full-grid}). Square brackets are bootstrap 95\% confidence intervals from $n\!=\!200$
+paired resamples of held-out predictions; bold marks the column winner among the deep-learning rows.}
+\label{tab:headline}
+\begin{tabular}{lcccccc}
+\toprule
+& & \multicolumn{2}{c}{\textbf{Time split}} & \multicolumn{2}{c}{\textbf{County split}} \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+\textbf{Encoder} & \textbf{Params (M)} & \textbf{$R^2$} [95\% CI] & \textbf{RMSE} & \textbf{$R^2$} [95\% CI] & \textbf{RMSE} \\
+\midrule
+\textbf{Geo-SimCLR*} & 11.2 & \textbf{+0.669 [+0.597, +0.714]} & \textbf{19.03} & \textbf{+0.660 [+0.591, +0.732]} & \textbf{16.60} \\
+DINOv2-base & 85.7 & +0.661 [+0.594, +0.710] & 19.25 & +0.602 [+0.525, +0.671] & 17.95 \\
+Prithvi-EO 2.0 & 303.9 & +0.550 [+0.504, +0.588] & 22.17 & +0.519 [+0.443, +0.581] & 19.74 \\
+Random ResNet-18 & 11.2 & +0.558 [+0.506, +0.604] & 21.96 & +0.583 [+0.509, +0.650] & 18.37 \\
+ConvLSTM (E2E) & 12.4 & +0.551 [+0.487, +0.620] & 21.95 & -- & -- \\
+Best NDVI baseline$^{a}$ & -- & +0.429 & 24.78 & +0.651 & 18.15 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.5em}
+\footnotesize\raggedright
+$^{*}$~Our model.\quad
+$^{a}$~Best NDVI baseline = state one-hot + year + 12 biweekly NDVI features, LightGBM
+(strongest of six tabular NDVI specifications; see Table~\ref{tab:baselines}).
+ConvLSTM is reported only on the time split.
+\end{table}

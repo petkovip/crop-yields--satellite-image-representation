@@ -1,0 +1,26 @@
+\begin{table}[H]
+\centering
+\caption{Geo-SimCLR representation diagnostics on the full 7-state pooled feature matrix
+($n\!=\!44{,}140$ tile vectors $\times\,512$ dimensions, $\ell_2$-normalized to match the cosine NT-Xent geometry).
+Effective rank follows Roy and Vetterli (2007); cosine-similarity statistics are computed over
+$n\!=\!2{,}000$ random tile-vector pairs.}
+\label{tab:effrank}
+\begin{tabular}{lc}
+\toprule
+\textbf{Diagnostic} & \textbf{Value} \\
+\midrule
+Number of pooled tile vectors & 44,140 \\
+Embedding dimensionality $D$ & 512 \\
+Effective rank $R_\mathrm{eff} = \exp(-\sum_i p_i \log p_i)$ & 82.3 \,/\, 512 \\
+Top-1 PC variance fraction & 7.21\% \\
+Top-10 PC variance fraction & 43.92\% \\
+Top-30 PC variance fraction & 69.14\% \\
+Singular-value ratio $s_0/s_1$ & 1.06 \\
+Singular-value ratio $s_0/s_{10}$ & 1.80 \\
+Within-county feature variance & 2.21e-04 \\
+Between-county feature variance & 1.29e-03 \\
+Variance ratio (within $/$ between) & 0.171 \\
+Mean post-$\ell_2$ cosine similarity (random pairs) & +0.228 $\pm$ 0.137 \\
+\bottomrule
+\end{tabular}
+\end{table}

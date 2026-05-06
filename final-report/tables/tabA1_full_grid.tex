@@ -1,0 +1,23 @@
+\begin{table}[H]
+\centering
+\caption{Full encoder $\times$ probe $\times$ split $\times$ \{with, without\} state+year features grid for the
+four deep-learning encoders ($R^2$, higher is better). $\pm$SY denotes whether the 7-state one-hot and the
+year scalar are appended to the encoder features before fitting the probe. Bold values are the per-column
+winner; an asterisk ($^{*}$) marks our model. RMSE versions omitted for compactness.}
+\label{tab:full-grid}
+\small
+\begin{tabular}{lcccccccc}
+\toprule
+ & \multicolumn{4}{c}{\textbf{Time split}} & \multicolumn{4}{c}{\textbf{County split}} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+ & \multicolumn{2}{c}{Ridge} & \multicolumn{2}{c}{LGBM} & \multicolumn{2}{c}{Ridge} & \multicolumn{2}{c}{LGBM} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}\cmidrule(lr){8-9}
+Encoder & $-$SY & $+$SY & $-$SY & $+$SY & $-$SY & $+$SY & $-$SY & $+$SY \\
+\midrule
+\textbf{Geo-SimCLR*} & \textbf{+0.669} & +0.548 & +0.624 & +0.542 & +0.451 & +0.452 & \textbf{+0.596} & \textbf{+0.660} \\
+DINOv2-base & +0.661 & \textbf{+0.609} & \textbf{+0.641} & \textbf{+0.582} & \textbf{+0.541} & \textbf{+0.559} & +0.495 & +0.602 \\
+Prithvi-EO 2.0 & +0.550 & +0.573 & +0.424 & +0.483 & +0.358 & +0.391 & +0.282 & +0.519 \\
+Random ResNet-18 & +0.558 & +0.565 & +0.506 & +0.560 & +0.312 & +0.354 & +0.404 & +0.583 \\
+\bottomrule
+\end{tabular}
+\end{table}

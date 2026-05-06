@@ -1,0 +1,51 @@
+\begin{table}[H]
+\centering
+\caption{Full hyperparameter and training-protocol summary for Geo-SimCLR self-supervised pre-training,
+the supervised end-to-end ConvLSTM baseline, and the frozen-feature probe protocol. Values are exactly
+those used to produce the headline results in Table~\ref{tab:headline}.}
+\label{tab:hyperparameters}
+\small
+\begin{tabular}{p{5.5cm}p{8.5cm}}
+\toprule
+\multicolumn{2}{l}{\textbf{Geo-SimCLR self-supervised pre-training (notebook 04)}} \\
+\midrule
+Backbone & ResNet-18 from scratch (3-channel input, no adapter) \\
+Projection head & MLP $512 \to 256 \to 128$ with BN+ReLU; $\ell_2$-normalized output \\
+Total parameters & $11.34\,\mathrm{M}$ (encoder $11.18\,\mathrm{M}$ + projector $0.16\,\mathrm{M}$) \\
+Loss & NT-Xent on $\ell_2$-normalized 128-d projections \\
+Temperature $\tau$ & 0.20 \\
+Batch size & 1024 (effective; DataParallel across 2 GPUs) \\
+Optimizer & AdamW, $\mathrm{lr}=10^{-3}$, $\mathrm{wd}=10^{-4}$ \\
+Scheduler & LinearLR warmup ($\mathrm{lr}/100 \to \mathrm{lr}$) over 5 epochs, then CosineAnnealingLR ($\eta_\mathrm{min}=10^{-6}$) for 45 epochs \\
+Epochs & 50 \\
+Mixed precision & AMP (bfloat16 autocast) + GradScaler \\
+Anchors per epoch & $\sim 644{,}922$ after dropping NaN-CRD anchors \\
+CRD-balanced sampling & WeightedRandomSampler, weights $\propto 1/(\#\mathrm{anchors\ per\ CRD})$, 61 CRDs \\
+Augmentations (per view) & hflip 0.5; vflip 0.5; rot90 $k\!\in\!\{1,2,3\}$ p=0.75; random crop 160--208 px $\to$ resize 224; sharpness $\times 2.0$ p=0.5; per-band intensity $\times U[0.8,1.2]$ p=0.8; per-band Gaussian noise $\sigma=0.02$; per-band z-score \\
+Excluded augmentations & spectral band dropout, RGB color jitter, mixup \\
+Data scope & 7 states (IA, IL, IN, MN, NE, OH, SD), 6 years (2017--2022), Apr--Sep biweekly, 224$\times$224 px AG (B02, B08, B11) tiles \\
+Wall time & $\sim$5--7 min / epoch $\times$ 50 ep $\approx$ 5\,h on 2 GPUs \\
+\midrule
+\multicolumn{2}{l}{\textbf{ConvLSTM end-to-end supervised baseline (notebook 05)}} \\
+\midrule
+Per-frame encoder & ResNet-18 (random init) producing 512-d per biweek \\
+Recurrence & single-layer LSTM, hidden 256 \\
+Head & MLP $256 \to 64 \to 1$, dropout 0.2 \\
+Target & $z$-scored on training yields \\
+Optimizer & AdamW, $\mathrm{lr}=10^{-4}$, $\mathrm{wd}=10^{-4}$ \\
+Scheduler & CosineAnnealingLR ($T_\mathrm{max}=30$, $\eta_\mathrm{min}=10^{-6}$) \\
+Batch size / Epochs & 32 / 30; checkpoint = best 2021-validation RMSE \\
+Augmentations & identical hflip / vflip / rot90 / random crop applied to all 12 biweek frames per example \\
+\midrule
+\multicolumn{2}{l}{\textbf{Frozen-feature probe protocol (notebook 05, all encoders)}} \\
+\midrule
+Pooling & mean-pool tile features per (fips, year, biweek), then per (fips, year) \\
+Linear probe & Ridge, $\alpha\!=\!1$ (no CV), no normalization \\
+Tree probe & LightGBM: 300 trees, lr 0.05, num\_leaves 31, min\_child\_samples 5 \\
+LGBM early stopping & 20 rounds on 2021 validation set (time split only) \\
+State+year features & 7-state one-hot + year scalar appended when applicable \\
+Splits & \textit{Time}: train 2017--2020 / val 2021 / test 2022. \textit{County}: random 20\% FIPS held out, all years. \\
+Bootstrap CIs & $n=200$ paired resamples of held-out predictions, percentiles 2.5/97.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
