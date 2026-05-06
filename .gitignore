@@ -14,8 +14,7 @@ final-report/presentation_notes.md
 # Re-add later via `git add -f data/...` / `git add -f models/...` if you want them tracked.
 data/
 models/
-# Ignore large reading CSVs
-readings/**/*.csv
+
 
 # Scratch helper scripts I generated during the cleanup pass
 .tmp_*.py
